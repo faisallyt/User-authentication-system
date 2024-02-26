@@ -1,5 +1,6 @@
 const express=require("express");
 const app=express();
+const bcrypt=require("bcrypt");
 const {Student,Teacher} =require("../db/index");
 const authenticate=require('../middlewares/authMiddleware');
 const router=express.Router();
@@ -21,9 +22,11 @@ router.post('/signup',async(req,res)=>{
 
     if(!ifUserExistsInStudents && !ifUserExistsInTeacher){
         try{
+
+            const hashedPassword=await bcrypt.hash(password,10);
             const newTeacher=await Teacher.create({
                 username,
-                password,
+                password:hashedPassword,
                 name,
                 subjects
             })
@@ -58,19 +61,27 @@ router.post('/login',async(req,res)=>{
     }
     const {username,password}=req.body;
 
-    const teacher=await Teacher.findOne({username,password});
+    const teacher=await Teacher.findOne({username});
 
     if(teacher){
-         req.session.user={
-            id:teacher._id,
-            role:'teacher'
-         }
-
-         res.status(200).json({
-            message:'Login succesfull',
-            user:req.session.user,
-            data:teacher
-         })
+        const passwordMatch=await bcrypt.compare(password,teacher.password);
+        if(passwordMatch){
+            req.session.user={
+               id:teacher._id,
+               role:'teacher'
+            }
+   
+            res.status(200).json({
+               message:'Login succesfull',
+               user:req.session.user,
+               data:teacher
+            })
+        }
+        else{
+            res.status(401).json({
+                error:'Invalid credentials'
+            })
+        }
     }
     else{
         res.status(401).json({
