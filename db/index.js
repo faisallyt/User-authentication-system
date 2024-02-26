@@ -1,5 +1,12 @@
 const mongoose=require("mongoose");
-mongoose.connect("mongodb+srv://anony6905:faisald181@cluster0.zwdgraw.mongodb.net/User-authorization");
+const dbConnection=process.env.MONGODB_URI || "mongodb+srv://anony6905:faisald181@cluster0.zwdgraw.mongodb.net/User-authorization";
+mongoose.connect(dbConnection)
+  .then(()=>{
+    console.log("connected to MongoDb");
+  })
+  .catch((error)=>{
+    console.error("Error connecting to MongoDB",error.message);
+  })
 
 const StudentSchema=new mongoose.Schema({
     username:{type:String,unique:true, required:true},
