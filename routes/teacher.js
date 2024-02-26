@@ -107,5 +107,54 @@ router.get('/logout',authenticate('teacher'),(req,res)=>{
     })
 })
 
+router.put('/update-name',authenticate('teacher'),async(req,res)=>{
+    try{
+        const updatedTeacher= await Teacher.updateOne({_id:req.session.user.id},{$set:{name:req.body.name}});
+        
+        res.status(200).json({
+            message:"Name updated succesfully",
+            user:req.session.user,
+            data:updatedTeacher,
+        });
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({
+            
+                error:"Internal Server Error",
+        });
+    }
+});
+
+router.put('/update-password',authenticate('teacher'),async(req,res)=>{
+    const inputPassword=req.body.password;
+    
+        try{
+            const user=await Teacher.findOne({_id:req.session.user.id});
+            const isSamePassword=await bcrypt.compare(inputPassword,user.password);
+            if(isSamePassword){
+                res.status(401).json({
+                    error:'New Password is same as the Old password',
+                })
+            }
+            else{
+                const newHashedPassword= await bcrypt.hash(inputPassword,10);
+                const updatedTeacher= await Teacher.updateOne({_id:req.session.user.id},{$set:{password:newHashedPassword}});
+                res.status(200).json({
+                    message:"Name updated succesfully",
+                    user:req.session.user,
+                    data:updatedTeacher,
+                });
+            }
+        }
+        catch(err){
+            console.error(err);
+            res.status(500).json({
+                
+                    error:"Internal Server Error",
+            });
+        }
+
+});
 
 module.exports=router;
